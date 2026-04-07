@@ -1,0 +1,12 @@
+---
+- name: Automatisation du déploiement Kubernetes
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Appliquer le manifeste Kubernetes (via WSL Interop)
+      command: kubectl.exe apply -f k8s-manifest.yaml
+      register: result
+
+    - name: Afficher le résultat du déploiement
+      debug:
+        msg: "{{ result.stdout }}"
