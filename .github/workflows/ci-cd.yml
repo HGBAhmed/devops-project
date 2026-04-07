@@ -1,0 +1,58 @@
+name: Build and Deploy to GKE
+
+# Le pipeline se lance à chaque "push" sur la branche principale
+on:
+  push:
+    branches:
+      - main
+
+# Définition des variables d'environnement
+env:
+  PROJECT_ID: gcp-cloud-native-project
+  REGION: europe-west9
+  GAR_LOCATION: europe-west9-docker.pkg.dev/gcp-cloud-native-project/mon-repo-devops
+  GKE_CLUSTER: cluster-devops-production
+  GKE_ZONE: europe-west9-a
+  DEPLOYMENT_NAME: mon-app-deployment
+  IMAGE: mon-app
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Récupérer le code depuis GitHub
+    - name: Checkout du code
+      uses: actions/checkout@v4
+
+    # 2. S'authentifier sur Google Cloud avec le secret
+    - name: Authentification GCP
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+    # 3. Configurer Docker pour utiliser le registre Google
+    - name: Configuration Docker
+      run: |-
+        gcloud auth configure-docker europe-west9-docker.pkg.dev
+
+    # 4. Construire et pousser l'image Docker sur Artifact Registry
+    - name: Build and Push Docker Image
+      run: |-
+        docker build -t "$GAR_LOCATION/$IMAGE:${{ github.sha }}" .
+        docker push "$GAR_LOCATION/$IMAGE:${{ github.sha }}"
+
+    # 5. Se connecter au cluster Kubernetes (GKE)
+    - name: Configuration de kubectl
+      uses: google-github-actions/get-gke-credentials@v2
+      with:
+        cluster_name: ${{ env.GKE_CLUSTER }}
+        location: ${{ env.GKE_ZONE }}
+
+    # 6. Mettre à jour le manifeste K8s avec la nouvelle image et déployer
+    - name: Déployer sur Kubernetes
+      run: |-
+        # On remplace l'ancienne image Docker Hub par la nouvelle image GCP
+        sed -i "s|image: .*|image: $GAR_LOCATION/$IMAGE:${{ github.sha }}|g" k8s-manifest.yaml
+        kubectl apply -f k8s-manifest.yaml
