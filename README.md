@@ -1,6 +1,6 @@
 # Mini-Projet DevOps : Déploiement Automatisé K8s & Ansible
 
-Ce projet est une preuve de concept (PoC) illustrant la conteneurisation, l'orchestration et l'automatisation de l'infrastructure logicielle (Infrastructure as Code). Il a été conçu pour simuler un workflow DevOps complet en environnement local.
+Ce projet est une preuve de concept (PoC) illustrant la conteneurisation, l'orchestration et l'automatisation de l'infrastructure logicielle (Infrastructure as Code). Il a été conçu pour simuler un workflow DevOps complet.
 
 ## 🛠️tack Technologique
 * **Application** : Python / Flask
